@@ -52,7 +52,7 @@ This will run the test suite in a separate container.
 
 ## API Documentation
 
-API documentation can be found in the `docs` directory. The [API.md](./docs/endpoints/API.md) file provides an overview, and individual endpoint documentation is available in the `endpoints` subdirectory.
+API documentation can be found in the `docs` directory. The [API.md](./docs/API.md) file provides an overview, and individual endpoint documentation is available in the `endpoints` subdirectory.
 
 ## Development
 
