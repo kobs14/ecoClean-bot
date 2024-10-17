@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_MULTIPLE_DATABASES=${POSTGRES_DB},${POSTGRES_DB_TEST}
+      - POSTGRES_PASSWORD
+      - TZ=America/Los_Angeles
+
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    env_file:
+      - .env
+
+
+  account:
+    build: .
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB}
+      - TEST_DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB_TEST}
+      - TZ=America/Los_Angeles
+    volumes:
+      - "./app/:/app"
+    env_file:
+      - .env
+    command: flask --app app/main --debug run --host 0.0.0.0
+
+
+  test:
+    build: .
+    depends_on:
+      - db
+    environment:
+      - TEST_DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB_TEST}
+      - TZ=America/Los_Angeles
+    volumes:
+      - "./app/:/app"
+    env_file:
+      - .env
+    command: pytest -v app/tests/
+
+
+volumes:
+  postgres_data:

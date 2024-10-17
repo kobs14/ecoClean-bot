@@ -1,0 +1,9 @@
+Flask~=2.2.3
+psycopg2-binary
+python-dotenv
+requests
+Werkzeug~=2.2.2
+pytest
+pytest-flask
+bcrypt
+email_validator

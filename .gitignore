@@ -1,0 +1,73 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+*.wheel
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+*.cover
+*.py,cover
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.log
+
+
+# Flask stuff:
+instance/
+.webassets-cache
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# PostgreSQL
+*.pgsql
+pgdata/
+
+# macOS
+.DS_Store
+
+# Docker
+**/docker-compose.override.yml
+.dockerignore
+
+# SQL dumps
+*.sql
+
+# Environment variables
+.env
+
+# Pytest cache
+.pytest_cache/
