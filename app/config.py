@@ -10,6 +10,15 @@ class Config:
     TESTING = False
     DATABASE_URL = os.getenv('DATABASE_URL')
 
+    STORAGE_TYPE = 'local'  # Change to 's3' when ready to use S3
+    STORAGE_CONFIG = {
+        'base_path': './data'  # For local storage
+        # Add S3 configurations when ready:
+        # 'bucket_name': 'your-bucket-name',
+        # 'aws_access_key_id': 'your-access-key',
+        # 'aws_secret_access_key': 'your-secret-key'
+    }
+
     @classmethod
     def set_database_url(cls, url):
         cls.DATABASE_URL = url
