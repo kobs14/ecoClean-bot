@@ -7,3 +7,4 @@ pytest
 pytest-flask
 bcrypt
 email_validator
+boto3
