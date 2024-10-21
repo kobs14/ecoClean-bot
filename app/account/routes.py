@@ -1,9 +1,10 @@
-import logging
-from uuid import UUID
 
+
+from uuid import UUID
 import bcrypt
-import psycopg2
+
 from flask import Blueprint, jsonify, request, current_app
+import psycopg2
 from psycopg2.extras import RealDictCursor
 
 from app.account.validators import validate_email_address, validate_field
