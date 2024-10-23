@@ -24,5 +24,10 @@ def create_app(config_name='default'):
     from app.telegram.routes import telegram_bp
     app.register_blueprint(telegram_bp, url_prefix='/telegram')
 
+    from app.reports.routes import reports_bp
+    app.register_blueprint(reports_bp, url_prefix='/reports')
 
+
+    
     return app
+
