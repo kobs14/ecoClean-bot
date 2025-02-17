@@ -53,7 +53,7 @@ def validate_field(field_name, value):
         return value
     elif field_name == 'account_phone':
         # Validate phone number format
-        if not re.match(r'^\+?[\d\s-]+$', value):
+        if not is_valid_phone(value):
             raise ValueError("Invalid phone number format.")
         return value
     elif field_name == 'account_username':
@@ -67,6 +67,11 @@ def validate_field(field_name, value):
             raise ValueError("Full name must be a string between 2 and 100 characters")
         if not all(part.isalpha() or part.isspace() for part in value):
             raise ValueError("Full name must contain only letters and spaces")
+        return value
+    elif field_name == 'email':
+        # Validate phone number format
+        if not validate_email_address(value):
+            raise ValueError("Invalid email address")
         return value
     elif field_name == 'account_password_hash':
         # Validate password

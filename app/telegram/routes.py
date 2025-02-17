@@ -1,15 +1,9 @@
 
-# app/telegram/routes.py
-
-
 from uuid import UUID
-
+import psycopg2
 from flask import Blueprint, jsonify, request
-import traceback
-from psycopg2 import sql
-from psycopg2 import errors as psycopg2_errors
-from psycopg2.extras import RealDictCursor
 
+from app.auth.decorators import requires_role
 from app.main import global_conn as conn
 from app.config import logger
 
@@ -18,119 +12,82 @@ telegram_bp = Blueprint('telegram', __name__)
 @telegram_bp.route('/link', methods=['POST'])
 def link_telegram_account():
     """
-    Create a new Telegram entry associated with an account.
+    Link and verify a Telegram account using a verification token.
 
     Request JSON format:
     {
-        "telegram_account_id": "UUID",       # The ID of the user account from the 'account' table (must be a valid UUID).
         "telegram_user_id": "string",        # Unique identifier for the Telegram user (required).
-        "telegram_username": "string",       # Unique Telegram username (optional).
-        "telegram_verified": "boolean"       # Whether the Telegram account is verified (default is False if not provided).
-        "telegram_is_admin": "boolean"
+        "telegram_username": "string",       # Unique Telegram username (required).
+        "verification_token": "UUID"         # Verification token from the welcome email (required).
     }
 
     Responses:
-        - 201: Telegram entry created successfully.
-          Example:
-          {
-            "message": "Telegram entry created successfully",
-            "telegram_id": "UUID"            # The ID of the newly created Telegram entry.
-          }
+        - 200: Telegram account linked and verified successfully.
         - 400: Bad request due to missing required fields or invalid data format.
-          Example:
-          {
-            "message": "Missing required fields: telegram_account_id or telegram_user_id."
-          }
-          or
-          {
-            "message": "Invalid telegram_account_id format."
-          }
-        - 404: The account with the provided 'telegram_account_id' was not found.
-          Example:
-          {
-            "message": "Account not found."
-          }
-        - 500: Internal server error, such as a database issue or unexpected exception.
-          Example:
-          {
-            "error": "Detailed error message describing the problem."
-          }
+        - 404: Verification token not found or expired.
+        - 409: Conflict due to unique constraint violation (e.g., duplicate user ID or username).
+        - 500: Internal server error.
     """
     data = request.json
-    logger.info(f"Attempting to create Telegram entry with data: {data}")
+    logger.info(f"Attempting to link Telegram account with data: {data}")
 
-    required_fields = ['telegram_account_id', 'telegram_user_id']
+    # Validate required fields
+    required_fields = ['telegram_user_id', 'verification_token', 'telegram_username']
     missing_fields = [field for field in required_fields if field not in data]
     if missing_fields:
         logger.warning(f"Missing required fields: {', '.join(missing_fields)}")
         return jsonify({"message": f"Missing required fields: {', '.join(missing_fields)}"}), 400
 
-    try:
-        telegram_account_id = str(UUID(data['telegram_account_id']))
-    except ValueError:
-        logger.error(f"Invalid telegram account ID format received: {data['telegram_account_id']}")
-        return jsonify({"message": "Invalid telegram account ID format."}), 400
-
     telegram_user_id = data['telegram_user_id']
     telegram_username = data.get('telegram_username')
-    telegram_verified = data.get('telegram_verified', False)
-    telegram_is_admin = data.get('telegram_is_admin', False)
-
-    query = sql.SQL(
-        "INSERT INTO telegram (telegram_account_id, telegram_user_id, telegram_username, telegram_verified, telegram_is_admin) "
-        "VALUES (%s, %s, %s, %s, %s) RETURNING telegram_id"
-    )
-    params = (telegram_account_id, telegram_user_id, telegram_username, telegram_verified, telegram_is_admin)
+    verification_token = data['verification_token']
 
     try:
-        logger.info(f"Executing SQL query: {query.as_string(conn)} with params: {params}")
         with conn.cursor() as cursor:
-            cursor.execute(query, params)
+            # Find the Telegram entry with the verification token
+            cursor.execute(
+                "SELECT telegram_id, telegram_account_id FROM telegram WHERE telegram_verification_token = %s",
+                (verification_token,)
+            )
             result = cursor.fetchone()
-            if result is None:
-                logger.error("INSERT operation did not return a result. This might indicate a constraint violation.")
-                conn.rollback()
-                return jsonify({"message": "Failed to create Telegram entry. Possible constraint violation."}), 400
 
-            # telegram_id = result[0]
-            conn.commit()
+            if not result:
+                logger.error(f"Verification token not found: {verification_token}")
+                return jsonify({"message": "Verification token not found or expired."}), 404
 
-        logger.info(
-            # f"Telegram entry created successfully with ID: {telegram_id} for telegram account ID: {telegram_account_id}")
-            f"Telegram entry created successfully with Username: {telegram_username} for telegram account ID: {telegram_account_id}")
-        return jsonify({"message": "Telegram entry created successfully", "telegram_username": telegram_username}), 201
+            telegram_account_id = result['telegram_account_id']
 
-    except psycopg2_errors.ForeignKeyViolation as e:
-        logger.error(f"Foreign key violation. Account with ID: {telegram_account_id} does not exist. Error: {str(e)}")
-        conn.rollback()
-        return jsonify(
-            {"message": "Account not found. Please ensure the account exists before linking a Telegram."}), 404
-    except psycopg2_errors.UniqueViolation as e:
-        conn.rollback()
-        if 'telegram_user_id' in str(e):
-            logger.error(f"Unique constraint violation on telegram_user_id. Error: {str(e)}")
+            # Update the Telegram entry with the user ID, username, and mark as verified
+            cursor.execute(
+                """UPDATE telegram 
+                   SET telegram_id = %s, telegram_username = %s, telegram_verified = TRUE 
+                   WHERE telegram_account_id = %s""",
+                (telegram_user_id, telegram_username, telegram_account_id)
+            )
+
+            conn.commit()  # Commit the transaction
+
+        logger.info(f"Telegram account linked and verified successfully for account ID: {telegram_account_id}")
+        return jsonify({"message": "Telegram account linked and verified successfully"}), 200
+
+    except psycopg2.errors.UniqueViolation as e:
+        if "telegram_user_id_key" in str(e):
             return jsonify({"message": "A Telegram entry with this user ID already exists."}), 409
-        elif 'telegram_username' in str(e):
-            logger.error(f"Unique constraint violation on telegram_username. Error: {str(e)}")
+        elif "telegram_username_key" in str(e):
             return jsonify({"message": "A Telegram entry with this username already exists."}), 409
         else:
-            logger.error(f"Unique constraint violation. Error: {str(e)}")
-            return jsonify({"message": "A Telegram entry with these details already exists."}), 409
-    except psycopg2_errors.CheckViolation as e:
-        logger.error(f"Check constraint violation. Error: {str(e)}")
-        conn.rollback()
-        return jsonify({"message": "The provided data violates a check constraint."}), 400
-    except psycopg2_errors.Error as e:
-        logger.error(f"Database error occurred: {e.pgerror}. SQL State: {e.pgcode}")
-        conn.rollback()
-        return jsonify({"message": "A database error occurred.", "error": str(e)}), 500
-    except Exception as e:
-        logger.error(f"Unexpected error creating Telegram entry for telegram account ID: {telegram_account_id}.")
-        logger.error(f"Error details: {str(e)}")
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        conn.rollback()
-        return jsonify({"message": "An unexpected error occurred.", "error": str(e)}), 500
+            return jsonify({"message": "A unique constraint violation occurred."}), 409
 
+    except psycopg2.errors.ForeignKeyViolation:
+        return jsonify({"message": "Account not found. Please ensure the account exists before linking a Telegram."}), 404
+
+    except psycopg2.errors.CheckViolation:
+        return jsonify({"message": "The provided data violates a check constraint."}), 400
+
+    except Exception as e:
+        logger.error(f"Unexpected error linking Telegram account: {str(e)}")
+        conn.rollback()
+        return jsonify({"error": "An unexpected error occurred."}), 500
 
 
 @telegram_bp.route('/<telegram_id>', methods=['GET'])
@@ -159,7 +116,7 @@ def get_telegram(telegram_id):
     try:
         with conn.cursor() as cursor:
             cursor.execute(
-                "SELECT telegram_id, telegram_account_id, telegram_user_id, telegram_username, telegram_verified, telegram_is_admin, telegram_created "
+                "SELECT telegram_id, telegram_account_id, telegram_username, telegram_verified, telegram_is_admin, telegram_created "
                 "FROM telegram WHERE telegram_id = %s",
                 (telegram_id,)
             )
@@ -204,7 +161,7 @@ def get_telegram_by_account(account_id):
     try:
         with conn.cursor() as cursor:
             cursor.execute(
-                "SELECT telegram_id, telegram_account_id, telegram_user_id, telegram_username, telegram_verified, telegram_is_admin, telegram_created "
+                "SELECT telegram_id, telegram_account_id, telegram_username, telegram_verified, telegram_is_admin, telegram_created "
                 "FROM telegram WHERE telegram_account_id = %s",
                 (account_id,)
             )
@@ -223,7 +180,7 @@ def get_telegram_by_account(account_id):
 
 
 
-
+@requires_role("admin")
 @telegram_bp.route('/<telegram_id>/admin', methods=['PUT'])
 def update_telegram_verified_and_admin(telegram_id):
     """
@@ -255,19 +212,22 @@ def update_telegram_verified_and_admin(telegram_id):
         logger.warning("Missing field to update.")
         return jsonify({"message": "No fields to update. Provide 'telegram_is_admin'."}), 400
 
+    # Validate telegram_is_admin is a boolean
     telegram_is_admin = data.get('telegram_is_admin')
+    if not isinstance(telegram_is_admin, bool):
+        logger.warning(f"Invalid type for telegram_is_admin: {type(telegram_is_admin)}")
+        return jsonify({"message": "Invalid type for telegram_is_admin. Expected a boolean."}), 400
 
     try:
         with conn.cursor() as cursor:
             cursor.execute(
                 "UPDATE telegram SET telegram_is_admin = %s WHERE telegram_id = %s RETURNING telegram_id",
-                (telegram_is_admin, telegram_id)
-            )
+                (telegram_is_admin, telegram_id))
             updated_id = cursor.fetchone()
 
             if not updated_id:
                 logger.warning(f"Telegram entry with ID: {telegram_id} not found.")
-                return jsonify({"message": "Telegram entry not found."}), 404
+                return jsonify({"error": "Telegram entry not found."}), 404
 
             conn.commit()  # Commit the transaction
             logger.info(f"Telegram entry with ID: {telegram_id} successfully updated.")
@@ -377,40 +337,34 @@ def search_telegram_entries():
     Search for Telegram entries based on provided query parameters.
 
     Query Parameters:
-        - username (str): Filter by Telegram username.
-        - verified (bool): Filter by verification status (true or false).
+        - telegram_username (str): Filter by Telegram username.
+        - telegram_verified (bool): Filter by verification status (true or false).
         - is_admin (bool): Filter by admin status (true or false).
 
     Returns:
         - 200: List of matching Telegram entries.
         - 400: Invalid query parameter format.
         - 500: Internal server error if an exception occurs during the search process.
-
-    Example Request:
-        GET /telegram/search?username=Monster&verified=true&is_admin=false
-
-    Example Response (Success):
-        [
-            {
-                "telegram_id": "e5845f2a-a5c2-4126-93eb-6625114a2b42",
-                "telegram_account_id": "58ad78c4-b13f-4cca-978e-cea672879a15",
-                "telegram_user_id": "tssss2e1",
-                "telegram_username": "Monster14",
-                "telegram_verified": true,
-                "telegram_created": "2024-10-17T16:44:05Z",
-                "telegram_is_admin": false
-            }
-        ]
-
-    Example Response (Error):
-        {
-            "error": "Error message here"
-        }
     """
-    username = request.args.get('username')
-    verified = request.args.get('verified')
-    is_admin = request.args.get('is_admin')
+    username = request.args.get('telegram_username')
+    verified = request.args.get('telegram_verified')
+    is_admin = request.args.get('telegram_is_admin')
 
+    # Validate verified parameter
+    if verified is not None:
+        if verified.lower() not in ['true', 'false']:
+            logger.warning(f"Invalid verified parameter: {verified}")
+            return jsonify({"message": "Invalid verified parameter format. Expected 'true' or 'false'."}), 400
+        verified = verified.lower() == 'true'
+
+    # Validate is_admin parameter
+    if is_admin is not None:
+        if is_admin.lower() not in ['true', 'false']:
+            logger.warning(f"Invalid is_admin parameter: {is_admin}")
+            return jsonify({"message": "Invalid is_admin parameter format. Expected 'true' or 'false'."}), 400
+        is_admin = is_admin.lower() == 'true'
+
+    # Construct the query
     query = "SELECT telegram_id, telegram_account_id, telegram_user_id, telegram_username, telegram_verified, telegram_created FROM telegram WHERE TRUE"
     filters = []
 
@@ -419,20 +373,12 @@ def search_telegram_entries():
         filters.append(f"%{username}%")  # Allow partial matches
 
     if verified is not None:
-        try:
-            verified = bool(verified.lower() == 'true')
-            query += " AND telegram_verified = %s"
-            filters.append(verified)
-        except ValueError:
-            return jsonify({"message": "Invalid verified parameter format."}), 400
+        query += " AND telegram_verified = %s"
+        filters.append(verified)
 
     if is_admin is not None:
-        try:
-            is_admin = bool(is_admin.lower() == 'true')
-            query += " AND telegram_is_admin = %s"
-            filters.append(is_admin)
-        except ValueError:
-            return jsonify({"message": "Invalid is_admin parameter format."}), 400
+        query += " AND telegram_is_admin = %s"
+        filters.append(is_admin)
 
     try:
         with conn.cursor() as cursor:
@@ -444,4 +390,3 @@ def search_telegram_entries():
     except Exception as e:
         logger.error(f"Error searching Telegram entries: {str(e)}")
         return jsonify({"error": str(e)}), 500
-

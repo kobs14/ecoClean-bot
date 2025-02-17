@@ -68,7 +68,7 @@ pgdata/
 .dockerignore
 
 # SQL dumps
-*.sql
+03-insert-data.sql
 
 # Environment variables
 .env

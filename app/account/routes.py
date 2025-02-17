@@ -1,91 +1,30 @@
 
 
-from uuid import UUID
+from uuid import UUID, uuid4
 import bcrypt
 
-from flask import Blueprint, jsonify, request, current_app
+from flask import Blueprint, jsonify, request
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
 from app.account.validators import validate_email_address, validate_field
+from app.auth.decorators import requires_role
+from app.mail.mail import send_email
 from app.main import global_conn as conn
 from app.config import logger
+
 
 bp = Blueprint('account', __name__)
 
 
-@bp.route('/test')
-def test():
-    """
-    Test route to verify that the server is running.
-
-    Returns:
-        str: A message confirming the test route is working.
-    """
-    logger.info("Test route accessed")
-    return "Test route is working"
-
-
-@bp.route('/routes')
-def list_routes():
-    """
-    Lists all routes registered with this blueprint.
-
-    Returns:
-        flask.Response: A JSON object containing the list of routes.
-    """
-    logger.info("Listing available routes")
-
-    routes = []
-    for rule in current_app.url_map.iter_rules():
-        if rule.endpoint.startswith(bp.name):
-            routes.append({
-                "endpoint": rule.endpoint,
-                "methods": list(rule.methods),
-                "route": str(rule)
-            })
-
-    logger.info(f"Found {len(routes)} routes")
-    return jsonify(routes)
-
-
-@bp.route('/db-test')
-def db_test():
-    """
-    Tests the database connection.
-
-    This function attempts to execute a simple SQL query to verify if the database
-    connection is working. If successful, it returns a confirmation message along with the query result.
-    If the connection fails, an error message is returned.
-
-    Returns:
-        flask.Response: A JSON object containing the success or failure message.
-        On success: {"message": "Database connection successful", "result": result}
-        On failure: {"message": "Database connection failed", "error": str(e)}
-    """
-
-    logger.info("Testing database connection")
-
-    try:
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT 1")
-            result = cursor.fetchone()
-        logger.info("Database connection successful")
-        return jsonify({"message": "Database connection successful", "result": result})
-
-    except Exception as e:
-        logger.error(f"Database connection failed: {str(e)}")
-        return jsonify({"message": "Database connection failed", "error": str(e)}), 500
-
-
-
 @bp.route('/register', methods=['POST'])
+@requires_role("admin")
 def create_account():
     """
-    Create a new account.
+    Create a new account and associated email.
 
     This endpoint receives account information, validates the input,
-    and creates a new account in the database.
+    creates a new account in the database, and associates an email with it.
 
     Request JSON format:
     {
@@ -93,31 +32,31 @@ def create_account():
         "fullname": "string",
         "phone": "string",
         "password": "string",
+        "email": "string",  # New field for email
         "is_admin": "boolean", (optional)
         "commission_rate": "decimal", (optional)
         "status": "string" (optional, defaults to "active")
     }
 
     Returns:
-        - 201: Account created successfully with account ID.
-        - 400: Missing required field or invalid phone format.
-        - 409: Username or phone number already exists.
+        - 201: Account and email created successfully with account ID.
+        - 400: Missing required field or invalid input.
+        - 409: Username, phone, or email already exists.
         - 500: Unexpected error occurred.
     """
-
     data = request.json
     logger.info(f"Received request to create account with username: {data.get('username')}")
 
+    # Validate required fields
     required_fields = {
         'account_username': 'username',
         'account_fullname': 'fullname',
         'account_phone': 'phone',
-        'account_password_hash': 'password'
+        'account_password_hash': 'password',
+        'email': 'email'
     }
 
     account_data = {}
-
-    # Validate required fields
     for field, json_key in required_fields.items():
         if json_key not in data:
             return jsonify({"message": f"Missing required field: {json_key}"}), 400
@@ -145,37 +84,76 @@ def create_account():
         password_hash = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt())
 
         with conn.cursor() as cursor:
+            # Create the account
             cursor.execute(
                 """INSERT INTO account (account_username, account_fullname, account_phone, 
                    account_password_hash, account_is_admin, account_commission_rate, account_status) 
-                   VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+                   VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING account_id""",
                 (account_data['account_username'], account_data['account_fullname'],
-                 account_data['account_phone'], account_data['account_password_hash'],
+                 account_data['account_phone'], password_hash.decode('utf-8'),
                  account_data.get('account_is_admin', False),
                  account_data.get('account_commission_rate', 0.00),
-                 account_data.get('account_status', 'active'))
+                 account_data.get('account_status', 'active')))
+            account_id = cursor.fetchone()['account_id']
+
+            # Create the associated email
+            cursor.execute(
+                """INSERT INTO email (email_account_id, email_address) 
+                   VALUES (%s, %s)""",
+                (account_id, account_data['email'])
             )
-        conn.commit()
-        logger.info(f"Account created successfully: {account_data['account_username']}")
-        return jsonify({"message": "Account created successfully"}), 201
+
+            # Generate a Telegram verification token
+            verification_token = str(uuid4())
+
+            # Insert the Telegram entry with the verification token
+            cursor.execute(
+                """INSERT INTO telegram (telegram_account_id, telegram_verification_token) 
+                   VALUES (%s, %s)""",
+                (account_id, verification_token)
+            )
+
+        conn.commit()  # Commit both inserts
+
+        logger.info(f"Account, email, and Telegram entry created successfully: {account_data['account_username']}")
+
+        # Send welcome email with verification link
+        verification_link = f"https://t.me/your_bot_link?start={verification_token}"
+        email_body = f"""
+                    <h1>Welcome to Our Service!</h1>
+                    <p>Your account has been successfully created.</p>
+                    <p>Click <a href="{verification_link}">here</a> to verify your Telegram account.</p>
+                """
+        success = send_email(
+            to_email=account_data['email'],
+            subject="Welcome to Our Service",
+            body=email_body
+        )
+
+        if not success:
+            return jsonify({"error": "Failed to send welcome email"}), 500
+
+        return jsonify(
+            {"message": "Account, email, and Telegram entry created successfully", "account_id": account_id}), 201
+
 
     except psycopg2.errors.UniqueViolation as e:
-        # Check if the error is related to username or phone
+        conn.rollback()
         if 'account_username' in str(e):
             logger.error(f"Username already exists: {data['username']}.")
-            conn.rollback()
             return jsonify({"message": "Username already exists."}), 409
         elif 'account_phone' in str(e):
             logger.error(f"Phone number already exists: {data['phone']}.")
-            conn.rollback()
             return jsonify({"message": "Phone number already exists."}), 409
+        elif 'email' in str(e):
+            logger.error(f"Email already exists: {data['email']}.")
+            return jsonify({"message": "Email already exists."}), 409
         else:
             logger.error(f"Error creating account: {str(e)}")
-            conn.rollback()
-            return jsonify({"error": "An unexpected error occurred."}), 50
+            return jsonify({"error": "An unexpected error occurred."}), 500
 
     except Exception as e:
-        conn.rollback()  # Rollback the transaction on error
+        conn.rollback()
         logger.error(f"Error creating account: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
@@ -285,6 +263,7 @@ def get_account(id):
 
 
 @bp.route('/<id>', methods=['PATCH'])
+@requires_role("admin")
 def update_account(id):
     """
     Update specific fields of an account identified by its UUID.
@@ -402,8 +381,9 @@ def update_account(id):
         return jsonify({"error": str(e)}), 500
 
 
-# TODO: Implement authorization
+
 @bp.route('/<id>', methods=['DELETE'])
+@requires_role("admin")
 def delete_account(id):
     """
     Delete an account and all associated records.
@@ -427,6 +407,7 @@ def delete_account(id):
         DELETE /account/123e4567-e89b-12d3-a456-426614174000
     """
     logger.info(f"Received request to delete account with ID: {id}")
+
     # Validate the account ID format
     try:
         account_id = str(UUID(id))
@@ -434,9 +415,10 @@ def delete_account(id):
         logger.error("Invalid account ID format received.")
         return jsonify({"message": "Invalid account ID format"}), 400
 
+
     try:
-        # Ensure the account exists before attempting to delete
         with conn.cursor() as cursor:
+            # Ensure the account exists before attempting to delete
             cursor.execute("SELECT account_id FROM account WHERE account_id = %s", (id,))
             account = cursor.fetchone()
 
@@ -460,13 +442,24 @@ def delete_account(id):
         logger.info(f"Account and associated records deleted successfully for account ID: {id}")
         return jsonify({"message": "Account and associated records deleted successfully"}), 200
 
+    except psycopg2.errors.ForeignKeyViolation:
+        logger.error(f"Foreign key violation while deleting account with ID: {id}")
+        conn.rollback()
+        return jsonify({"message": "Cannot delete account due to associated records in other tables."}), 409
+
+    except psycopg2.errors.DatabaseError as e:
+        logger.error(f"Database error while deleting account with ID: {id}: {str(e)}")
+        conn.rollback()
+        return jsonify({"message": "A database error occurred while deleting the account."}), 500
+
     except Exception as e:
-        logger.error(f"Error deleting account with ID: {id}: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        logger.error(f"Unexpected error while deleting account.")
+        conn.rollback()
+        return jsonify({"error": "An unexpected error occurred while deleting the account."}), 500
 
 
-# TODO: Implement authorization
 @bp.route('/<id>/status', methods=['PUT'])
+@requires_role("admin")
 def update_account_status(id):
     """
     Update the status of an account.
@@ -576,7 +569,6 @@ def search_accounts():
         return jsonify({"message": "Search term cannot be empty."}), 400
 
     try:
-        # Perform the search in the database
         with conn.cursor() as cur:
             cur.execute("""
                 SELECT * FROM account
@@ -654,22 +646,56 @@ def create_email():
 
     except psycopg2.errors.UniqueViolation:
         logger.error(f"Email {data['email']} already exists.")
-        conn.rollback()  # Rollback the transaction
+        conn.rollback()
         return jsonify({"message": "Email already exists."}), 409
 
     except psycopg2.errors.ForeignKeyViolation:
         logger.error(f"Account with ID: {data['account_id']} does not exist.")
-        conn.rollback()  # Rollback the transaction
+        conn.rollback()
         return jsonify({"message": "Account not found."}), 404
 
     except Exception as e:
         logger.error(f"Error creating email for account ID: {data['account_id']}: {str(e)}")
-        conn.rollback()  # Rollback the transaction on general error
+        conn.rollback()
         return jsonify({"error": str(e)}), 500
 
 
 
-#################################################################################
-# ALL ABOVE TESTED AND VERIFIED
-#################################################################################
+@bp.route('/register/mail', methods=['POST'])
+def test_mail():
+    """
+    Test the email sending functionality.
 
+    Request JSON format:
+    {
+        "email": "recipient@example.com"
+    }
+
+    Returns:
+        - 200: Email sent successfully.
+        - 400: Missing or invalid email address.
+        - 500: Failed to send email.
+    """
+    data = request.json
+    email = data.get('email')
+
+    # Validate email
+    if not email or not validate_email_address(email):
+        return jsonify({"message": "Invalid or missing email address"}), 400
+
+    # Send test email
+    subject = "Test Email from Flask App"
+    body = """
+        <h1>Test Email</h1>
+        <p>This is a test email sent from your Flask application.</p>
+    """
+    try:
+        if send_email(to_email=email, subject=subject, body=body):
+            logger.info(f"Test email sent successfully to {email}")
+            return jsonify({"message": "Test email sent successfully"}), 200
+        else:
+            logger.error(f"Failed to send test email to {email}")
+            return jsonify({"message": "Failed to send email"}), 500
+    except Exception as e:
+        logger.error(f"Error sending test email: {str(e)}")
+        return jsonify({"message": "An error occurred while sending the email"}), 500

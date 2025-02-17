@@ -1,6 +1,7 @@
-import uuid
+
 from typing import Union, Optional, Tuple
 
+from app.reports_summary.validators import validate_account
 from app.main import global_conn as conn
 from app.config import logger
 
@@ -14,12 +15,11 @@ from calendar import monthrange
 import io
 
 
+
 reports_bp = Blueprint('reports', __name__)
 
 
 # 1. GET /api/reports/summary
-#    - Query params: start_date, end_date, group_by (day/week/month/year)
-#    - Returns: Summary of job reports (count, total amount) grouped by the specified time period
 @reports_bp.route('/summary', methods=['GET'])
 def get_summary_report():
     """
@@ -89,15 +89,12 @@ def get_summary_report():
 
 
 # 2. GET /reports/employee-performance
-#    - Query params: start_date, end_date, employee_id (optional)
-#    - Returns: Performance metrics for all employees or a specific employee
 @reports_bp.route('/employee-performance', methods=['GET'])
 def get_employee_performance():
     """
-    Flask route handler for employee performance endpoint.
+    Get Employee performance endpoint.
     """
     try:
-        # Get and validate query parameters
         start_date = request.args.get('start_date')
         end_date = request.args.get('end_date')
         employee_id = request.args.get('employee_id')
@@ -117,10 +114,8 @@ def get_employee_performance():
         return jsonify({"error": str(e)}), 500
 
 
-#
+
 # 3. GET /reports/top-clients
-#    - Query params: start_date, end_date, limit (number of top clients to return)
-#    - Returns: List of top clients by total amount spent
 
 @reports_bp.route('/top-clients', methods=['GET'])
 def get_top_clients():
@@ -184,10 +179,8 @@ def get_top_clients():
         return jsonify({"error": str(e)}), 500
 
 
-#
+
 # 5. GET /reports/revenue-by-payment-method
-#    - Query params: start_date, end_date
-#    - Returns: Revenue breakdown by different payment methods
 @reports_bp.route('/revenue-by-payment-method', methods=['GET'])
 def get_revenue_by_payment_method():
     """
@@ -200,7 +193,6 @@ def get_revenue_by_payment_method():
     Returns:
     - A JSON object with payment methods and their corresponding total revenues.
     """
-    # Get and validate query parameters
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
 
@@ -217,7 +209,6 @@ def get_revenue_by_payment_method():
 
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            # SQL query to fetch revenue breakdown by payment method
             query = """
                 SELECT 
                     jr.payment_method,
@@ -233,7 +224,6 @@ def get_revenue_by_payment_method():
                     total_revenue DESC
             """
 
-            # Execute the query with the parameters
             cursor.execute(query, (start_date, end_date))
             results = cursor.fetchall()
 
@@ -243,10 +233,8 @@ def get_revenue_by_payment_method():
         return jsonify({"error": str(e)}), 500
 
 
-#
+
 # 10. GET /reports/custom
-#     - Query params: Various filters and grouping options
-#     - Returns: Customizable report based on user-specified criteria
 @reports_bp.route('/custom', methods=['GET'])
 def get_custom_report():
     """
@@ -263,7 +251,6 @@ def get_custom_report():
     Returns:
     - A JSON object containing the customizable report data.
     """
-    # Get and validate query parameters
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
     payment_method = request.args.get('payment_method')
@@ -271,7 +258,6 @@ def get_custom_report():
     group_by = request.args.get('group_by', default='payment_method')  # Default group by payment method
     limit = request.args.get('limit', default=100, type=int)
 
-    # Prepare the base query
     base_query = """
         SELECT 
             jr.job_status,
@@ -330,8 +316,6 @@ def get_custom_report():
 
 
 # 7. GET /reports/excel/monthly-summary
-#    - Query params: year, month
-#    - Returns: Excel file with detailed monthly summary
 @reports_bp.route('/excel/monthly-summary', methods=['GET'])
 def get_monthly_summary_excel():
     # Get and validate query parameters
@@ -457,15 +441,12 @@ def get_weekly_summary_excel():
 
 
 # 8. GET /reports/excel/employee-performance
-#    - Query params: start_date, end_date
-#    - Returns: Excel file with detailed employee performance data
 @reports_bp.route('/excel/employee-performance', methods=['GET'])
 def get_employee_performance_excel():
     """
     Generate Excel report for employee performance data.
     """
     try:
-        # Get and validate query parameters
         start_date = request.args.get('start_date')
         end_date = request.args.get('end_date')
         employee_id = request.args.get('employee_id')
@@ -583,66 +564,6 @@ def setup_job_reports_sheet(sheet, data):
         cell = sheet.cell(row=row, column=3)
         cell.number_format = '$#,##0.00'
 
-
-def is_valid_uuid(val):
-    """Check if string is a valid UUID"""
-    try:
-        uuid.UUID(str(val))
-        return True
-    except ValueError:
-        return False
-
-
-def validate_account(
-        account_id: Optional[str] = None,
-        account_fullname: Optional[str] = None,
-        db_connection=None
-) -> Tuple[bool, Optional[str]]:
-    """
-    Validate account parameters
-    Returns (is_valid, error_message)
-    """
-    if not account_id and not account_fullname:
-        return True, None
-
-    try:
-        if account_id:
-            if not is_valid_uuid(account_id):
-                return False, "Invalid account ID format. Must be a valid UUID."
-
-            # Check if account exists and is active
-            query = """
-                SELECT EXISTS(
-                    SELECT 1 FROM account 
-                    WHERE account_id = %s 
-                    AND account_status = 'active'
-                )
-            """
-            with db_connection.cursor() as cur:
-                cur.execute(query, (account_id,))
-                exists = cur.fetchone()[0]
-                if not exists:
-                    return False, f"Account with ID {account_id} not found or is inactive."
-
-        if account_fullname:
-            # Check if account exists and is active
-            query = """
-                SELECT EXISTS(
-                    SELECT 1 FROM account 
-                    WHERE LOWER(account_fullname) LIKE LOWER(%s)
-                    AND account_status = 'active'
-                )
-            """
-            with db_connection.cursor() as cur:
-                cur.execute(query, (f"%{account_fullname}%",))
-                exists = cur.fetchone()[0]
-                if not exists:
-                    return False, f"No active accounts found matching name '{account_fullname}'."
-
-        return True, None
-
-    except Exception as e:
-        return False, f"Error validating account: {str(e)}"
 
 
 def get_filtered_job_reports(
