@@ -10,6 +10,14 @@ class Config:
     TESTING = False
     DATABASE_URL = os.getenv('DATABASE_URL')
 
+    # Email configuration
+    MAIL_SERVER = os.getenv('MAIL_SERVER')
+    MAIL_PORT = int(os.getenv('MAIL_PORT', 587))
+    MAIL_USE_TLS = os.getenv('MAIL_USE_TLS', 'True').lower() == 'true'
+    MAIL_USERNAME = os.getenv('MAIL_USERNAME')
+    MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
+    MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER')
+
     STORAGE_TYPE = 'local'  # Change to 's3' when ready to use S3
     STORAGE_CONFIG = {
         'base_path': './data'  # For local storage

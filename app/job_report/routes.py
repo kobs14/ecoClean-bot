@@ -139,6 +139,7 @@ def upload_job_report_photo(job_report_id):
     - 201: Photo uploaded successfully with photo ID.
     - 400: Invalid file or missing required fields.
     - 401: Unauthorized access.
+    - 404: Job report not found.
     - 500: Unexpected error occurred.
     """
 
@@ -159,14 +160,19 @@ def upload_job_report_photo(job_report_id):
 
     try:
         job_report_id = str(UUID(job_report_id))
+    except ValueError:
+        logger.error(f"Invalid account ID format received: {job_report_id}")
+        return jsonify({"message": "Invalid account ID format."}), 400
+
+    try:
         with conn.cursor() as cursor:
             cursor.execute("SELECT job_report_id FROM job_report WHERE job_report_id = %s", (str(job_report_id),))
             if cursor.fetchone() is None:
                 return jsonify({"message": "Job report not found."}), 404
 
-    except ValueError:
-        logger.error(f"Invalid account ID format received: {job_report_id}")
-        return jsonify({"message": "Invalid account ID format."}), 400
+    except Exception as e:
+        logger.error(f"Error checking job report existence: {str(e)}")
+        return jsonify({"error": "An unexpected error occurred while checking the job report."}), 500
 
     try:
         filename = file.filename
@@ -200,8 +206,6 @@ def upload_job_report_photo(job_report_id):
     except Exception as e:
         logger.error(f"Error uploading photo: {str(e)}")
         return jsonify({"error": "An error occurred while uploading the photo."}), 500
-
-
 
 @job_report_bp.route('/<account_id>/reports', methods=['GET'])
 def get_reports_account_id(account_id):
@@ -475,7 +479,7 @@ def delete_job_report(job_report_id):
             deleted_report = cursor.fetchone()
 
             # ~TODO: handle the logic to delete the actual file from your storage system
-            #        # For example: storage.delete_file(deleted_photo['photo_url'])
+            #   # For example: storage.delete_file(deleted_photo['photo_url'])
 
             conn.commit()
             return jsonify({
