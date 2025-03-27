@@ -19,7 +19,7 @@ def client(app):
 ###################################
 
 # Test for successful deletion of an account
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 @patch('app.auth.decorators.get_current_user')
 def test_delete_account_success(mock_get_current_user, mock_conn, client):
     mock_cursor = MagicMock()
@@ -54,7 +54,7 @@ def test_delete_account_invalid_id_format(mock_get_current_user, client):
 
 # Test for account not found
 
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 @patch('app.auth.decorators.get_current_user')
 def test_delete_account_not_found(mock_get_current_user, mock_conn, client):
     mock_cursor = MagicMock()
@@ -73,7 +73,7 @@ def test_delete_account_not_found(mock_get_current_user, mock_conn, client):
 
 
 # Test for unexpected error during deletion
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 @patch('app.auth.decorators.get_current_user')
 def test_delete_account_unexpected_error(mock_get_current_user, mock_conn, client):
     mock_cursor = MagicMock()

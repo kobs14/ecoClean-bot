@@ -7,8 +7,8 @@ from app.main import global_conn as conn
 from app.config import logger
 from .validators import validate_field, allowed_file
 
-from ..storage.storage_factory import get_storage
-from ..config import Config
+from app.storage.storage_factory import get_storage
+from app.config import Config
 
 storage = get_storage(Config.STORAGE_TYPE, **Config.STORAGE_CONFIG, subdirectory='job_reports')
 

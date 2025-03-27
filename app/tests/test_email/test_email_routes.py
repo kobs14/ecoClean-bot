@@ -13,7 +13,7 @@ def client():
     with app.test_client() as client:
         yield client
 
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 def test_create_email_success(mock_conn, client):
     # Mock cursor behavior for successful email creation
     mock_cursor = MagicMock()
@@ -35,7 +35,7 @@ def test_create_email_success(mock_conn, client):
     assert 'email_id' in result
 
 
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 def test_create_email_missing_fields(mock_conn, client):
     # Test missing fields
     data = {'account_id': str(uuid4())}  # Missing email
@@ -47,7 +47,7 @@ def test_create_email_missing_fields(mock_conn, client):
     assert result['message'] == "Missing required fields: account_id or email."
 
 
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 def test_create_email_invalid_email(mock_conn, client):
     # Test invalid email format
     account_id = str(uuid4())
@@ -63,7 +63,7 @@ def test_create_email_invalid_email(mock_conn, client):
     assert result['message'] == "Invalid email format."
 
 
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 def test_create_email_already_exists(mock_conn, client):
     # Mock cursor behavior for unique violation
     mock_cursor = MagicMock()

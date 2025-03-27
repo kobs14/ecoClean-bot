@@ -34,7 +34,7 @@ def test_search_accounts_empty_term(client):
     assert result['message'] == "Search term cannot be empty."
 
 # Test for no accounts found
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 def test_search_accounts_not_found(mock_conn, client):
     search_term = "nonexistent"
     mock_cursor = MagicMock()
@@ -48,7 +48,7 @@ def test_search_accounts_not_found(mock_conn, client):
     assert result['message'] == "No accounts found."
 
 # Test for successful search
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 def test_search_accounts_success(mock_conn, client):
     search_term = "john"
     mock_cursor = MagicMock()
@@ -77,7 +77,7 @@ def test_search_accounts_success(mock_conn, client):
     assert result[1]['account_username'] == 'john_smith'  # Check second account details
 
 # Test for unexpected error during search
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 def test_search_accounts_unexpected_error(mock_conn, client):
     search_term = "john"
     mock_cursor = MagicMock()

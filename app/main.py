@@ -18,16 +18,16 @@ def create_app(config_name='default'):
         logger.info('Database Initialized.')
 
     # Register your blueprints
-    from app.account.routes import bp as account_bp
+    from app.routes.account.routes import account_bp
     app.register_blueprint(account_bp, url_prefix='/account')
 
-    from app.telegram.routes import telegram_bp
+    from app.routes.telegram.routes import telegram_bp
     app.register_blueprint(telegram_bp, url_prefix='/telegram')
 
-    from app.job_report.routes import job_report_bp
+    from app.routes.job_report.routes import job_report_bp
     app.register_blueprint(job_report_bp, url_prefix='/job-report')
 
-    from app.reports_summary.routes import reports_bp
+    from app.routes.reports_summary.routes import reports_bp
     app.register_blueprint(reports_bp, url_prefix='/reports')
 
 

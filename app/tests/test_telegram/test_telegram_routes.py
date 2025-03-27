@@ -18,7 +18,7 @@ def client(app):
 
 
 # Test for successful creation of a Telegram entry
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_link_telegram_account_success(mock_conn, client):
     """
     Test successful linking of a Telegram account.
@@ -47,7 +47,7 @@ def test_link_telegram_account_success(mock_conn, client):
     mock_conn.commit.assert_called()  # Ensure the transaction was committed
 
 
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_link_telegram_account_missing_fields(mock_conn, client):
     """
     Test linking a Telegram account with missing required fields.
@@ -58,7 +58,7 @@ def test_link_telegram_account_missing_fields(mock_conn, client):
     assert "Missing required fields" in json.loads(response.data)['message']
 
 
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_link_telegram_account_invalid_token(mock_conn, client):
     """
     Test linking a Telegram account with an invalid or expired verification token.
@@ -81,7 +81,7 @@ def test_link_telegram_account_invalid_token(mock_conn, client):
     assert json.loads(response.data)['message'] == "Verification token not found or expired."
 
 
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_link_telegram_account_db_error(mock_conn, client):
     """
     Test linking a Telegram account when a database error occurs.
@@ -106,7 +106,7 @@ def test_link_telegram_account_db_error(mock_conn, client):
     mock_conn.rollback.assert_called()  # Ensure rollback is called on error
 
 # Test for missing required fields
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_link_telegram_account_missing_fields(mock_conn, client):
     # No need to mock cursor as this won't reach DB interaction
 
@@ -123,7 +123,7 @@ def test_link_telegram_account_missing_fields(mock_conn, client):
 
 
 # Test for invalid verification token (not found)
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_link_telegram_account_invalid_token(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -143,7 +143,7 @@ def test_link_telegram_account_invalid_token(mock_conn, client):
 
 
 # Test for successful account linking
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_link_telegram_account_success(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -163,7 +163,7 @@ def test_link_telegram_account_success(mock_conn, client):
 
 
 # Test for unique violation on telegram_user_id
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_link_telegram_account_user_id_exists(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -185,7 +185,7 @@ def test_link_telegram_account_user_id_exists(mock_conn, client):
 
 
 # Test for unique violation on telegram_username
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_link_telegram_account_username_exists(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -207,7 +207,7 @@ def test_link_telegram_account_username_exists(mock_conn, client):
 
 
 # Test for unexpected database error
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_link_telegram_account_unexpected_error(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -229,7 +229,7 @@ def test_link_telegram_account_unexpected_error(mock_conn, client):
 ###
 
 # Test for successfully retrieving a Telegram entry
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_get_telegram_success(mock_conn, client):
     # Mock cursor behavior for successful retrieval
     mock_cursor = MagicMock()
@@ -273,7 +273,7 @@ def test_get_telegram_invalid_uuid(client):
 
 
 # Test for Telegram entry not found
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_get_telegram_not_found(mock_conn, client):
     # Mock cursor behavior to simulate no entry found
     mock_cursor = MagicMock()
@@ -291,7 +291,7 @@ def test_get_telegram_not_found(mock_conn, client):
 
 
 # Test for unexpected database error
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_get_telegram_unexpected_error(mock_conn, client):
     # Mock cursor behavior to raise an unexpected exception
     mock_cursor = MagicMock()
@@ -312,7 +312,7 @@ def test_get_telegram_unexpected_error(mock_conn, client):
 ###
 
 # Test for successfully retrieving a Telegram entry by account_id
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_get_telegram_by_account_success(mock_conn, client):
     # Mock cursor behavior for successful retrieval
     mock_cursor = MagicMock()
@@ -356,7 +356,7 @@ def test_get_telegram_by_account_invalid_uuid(client):
 
 
 # Test for Telegram entry not found for the given account_id
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_get_telegram_by_account_not_found(mock_conn, client):
     # Mock cursor behavior to simulate no entry found
     mock_cursor = MagicMock()
@@ -374,7 +374,7 @@ def test_get_telegram_by_account_not_found(mock_conn, client):
 
 
 # Test for unexpected database error
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_get_telegram_by_account_unexpected_error(mock_conn, client):
     # Mock cursor behavior to raise an unexpected exception
     mock_cursor = MagicMock()
@@ -395,7 +395,7 @@ def test_get_telegram_by_account_unexpected_error(mock_conn, client):
 ###
 
 # Test for successfully updating the telegram_is_admin field
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_update_telegram_verified_and_admin_success(mock_conn, client):
     # Mock cursor behavior for successful update
     mock_cursor = MagicMock()
@@ -436,7 +436,7 @@ def test_update_telegram_verified_and_admin_invalid_uuid(client):
 
 
 # Test for missing required fields
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_update_telegram_verified_and_admin_missing_fields(mock_conn, client):
     # No need to mock cursor as this won't reach DB interaction
 
@@ -454,7 +454,7 @@ def test_update_telegram_verified_and_admin_missing_fields(mock_conn, client):
 
 
 # Test for Telegram entry not found
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_update_telegram_verified_and_admin_not_found(mock_conn, client):
     # Mock cursor behavior to simulate no entry found
     mock_cursor = MagicMock()
@@ -477,7 +477,7 @@ def test_update_telegram_verified_and_admin_not_found(mock_conn, client):
 
 
 # Test for unexpected database error
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_update_telegram_verified_and_admin_unexpected_error(mock_conn, client):
     # Mock cursor behavior to raise an unexpected exception
     mock_cursor = MagicMock()
@@ -502,7 +502,7 @@ def test_update_telegram_verified_and_admin_unexpected_error(mock_conn, client):
 ###
 
 # Test for successfully updating the telegram_verified field
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_update_telegram_verified_success(mock_conn, client):
     # Mock cursor behavior for successful update
     mock_cursor = MagicMock()
@@ -543,7 +543,7 @@ def test_update_telegram_verified_invalid_uuid(client):
 
 
 # Test for missing required fields
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_update_telegram_verified_missing_fields(mock_conn, client):
     # No need to mock cursor as this won't reach DB interaction
 
@@ -561,7 +561,7 @@ def test_update_telegram_verified_missing_fields(mock_conn, client):
 
 
 # Test for Telegram entry not found
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_update_telegram_verified_not_found(mock_conn, client):
     # Mock cursor behavior to simulate no entry found
     mock_cursor = MagicMock()
@@ -584,7 +584,7 @@ def test_update_telegram_verified_not_found(mock_conn, client):
 
 
 # Test for unexpected database error
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_update_telegram_verified_unexpected_error(mock_conn, client):
     # Mock cursor behavior to raise an unexpected exception
     mock_cursor = MagicMock()
@@ -609,7 +609,7 @@ def test_update_telegram_verified_unexpected_error(mock_conn, client):
 ###
 
 # Test for successfully deleting a Telegram entry
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_delete_telegram_success(mock_conn, client):
     # Mock cursor behavior for successful deletion
     mock_cursor = MagicMock()
@@ -627,7 +627,7 @@ def test_delete_telegram_success(mock_conn, client):
 
 
 # Test for Telegram entry not found
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_delete_telegram_not_found(mock_conn, client):
     # Mock cursor behavior to simulate no entry found
     mock_cursor = MagicMock()
@@ -645,7 +645,7 @@ def test_delete_telegram_not_found(mock_conn, client):
 
 
 # Test for unexpected database error
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_delete_telegram_unexpected_error(mock_conn, client):
     # Mock cursor behavior to raise an unexpected exception
     mock_cursor = MagicMock()
@@ -665,7 +665,7 @@ def test_delete_telegram_unexpected_error(mock_conn, client):
 ###
 
 # Test for successfully searching Telegram entries with valid query parameters
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_search_telegram_entries_success(mock_conn, client):
     # Mock cursor behavior for successful search
     mock_cursor = MagicMock()
@@ -727,7 +727,7 @@ def test_search_telegram_entries_invalid_is_admin_format(client):
 
 
 # Test for searching without any filters (should return all entries)
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_search_telegram_entries_no_filters(mock_conn, client):
     # Mock cursor behavior for successful search
     mock_cursor = MagicMock()
@@ -763,7 +763,7 @@ def test_search_telegram_entries_no_filters(mock_conn, client):
 
 
 # Test for unexpected database error
-@patch('app.telegram.routes.conn')
+@patch('app.routes.telegram.routes.conn')
 def test_search_telegram_entries_unexpected_error(mock_conn, client):
     # Mock cursor behavior to raise an unexpected exception
     mock_cursor = MagicMock()

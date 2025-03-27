@@ -1,5 +1,5 @@
 import pytest
-from app.account.validators import validate_email_address, is_valid_phone, validate_field
+from app.routes.account.validators import validate_email_address, is_valid_phone, validate_field
 
 
 # Test for validate_email_address function

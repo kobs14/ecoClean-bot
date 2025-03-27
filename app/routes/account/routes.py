@@ -7,17 +7,17 @@ from flask import Blueprint, jsonify, request
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-from app.account.validators import validate_email_address, validate_field
+from app.routes.account.validators import validate_email_address, validate_field
 from app.auth.decorators import requires_role
-from app.mail.mail import send_email
+from app.routes.mail.mail import send_email
 from app.main import global_conn as conn
 from app.config import logger
 
 
-bp = Blueprint('account', __name__)
+account_bp = Blueprint('account', __name__)
 
 
-@bp.route('/register', methods=['POST'])
+@account_bp.route('/register', methods=['POST'])
 @requires_role("admin")
 def create_account():
     """
@@ -158,7 +158,7 @@ def create_account():
         return jsonify({"error": str(e)}), 500
 
 
-@bp.route('/all', methods=['GET'])
+@account_bp.route('/all', methods=['GET'])
 def get_all_accounts():
     """
     Fetches all accounts from the database, including related email and Telegram details.
@@ -209,7 +209,7 @@ def get_all_accounts():
         return jsonify({"error": str(e)}), 500
 
 
-@bp.route('/<id>', methods=['GET'])
+@account_bp.route('/<id>', methods=['GET'])
 def get_account(id):
     """
     Fetches an account and its associated emails and Telegram info by account ID.
@@ -262,7 +262,7 @@ def get_account(id):
         return jsonify({"error": str(e)}), 500
 
 
-@bp.route('/<id>', methods=['PATCH'])
+@account_bp.route('/<id>', methods=['PATCH'])
 @requires_role("admin")
 def update_account(id):
     """
@@ -382,7 +382,7 @@ def update_account(id):
 
 
 
-@bp.route('/<id>', methods=['DELETE'])
+@account_bp.route('/<id>', methods=['DELETE'])
 @requires_role("admin")
 def delete_account(id):
     """
@@ -458,7 +458,7 @@ def delete_account(id):
         return jsonify({"error": "An unexpected error occurred while deleting the account."}), 500
 
 
-@bp.route('/<id>/status', methods=['PUT'])
+@account_bp.route('/<id>/status', methods=['PUT'])
 @requires_role("admin")
 def update_account_status(id):
     """
@@ -518,7 +518,7 @@ def update_account_status(id):
 
 
 
-@bp.route('/accounts', methods=['GET'])
+@account_bp.route('/accounts', methods=['GET'])
 def get_accounts_by_status():
     """
     Fetches accounts from the database based on their status.
@@ -558,7 +558,7 @@ def get_accounts_by_status():
         return jsonify({"error": "Unexpected error"}), 500
 
 
-@bp.route('/accounts/search', methods=['GET'])
+@account_bp.route('/accounts/search', methods=['GET'])
 def search_accounts():
     search_term = request.args.get('q', '')
     logger.info(f"Searching accounts with term: {search_term}")
@@ -592,7 +592,7 @@ def search_accounts():
         return jsonify({"error": str(e)}), 500
 
 
-@bp.route('/email', methods=['POST'])
+@account_bp.route('/email', methods=['POST'])
 def create_email():
     """
     Create a new email associated with an account.
@@ -661,7 +661,7 @@ def create_email():
 
 
 
-@bp.route('/register/mail', methods=['POST'])
+@account_bp.route('/register/mail', methods=['POST'])
 def test_mail():
     """
     Test the email sending functionality.

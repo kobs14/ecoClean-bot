@@ -22,9 +22,9 @@ def client(app):
 
 
 # Test for successful account creation
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 @patch('app.auth.decorators.get_current_user')
-@patch('app.account.routes.send_email')
+@patch('app.routes.account.routes.send_email')
 def test_create_account_success(mock_send_email, mock_get_current_user, mock_conn, client):
     # Step 1: Mock user authentication
     mock_get_current_user.return_value = {
@@ -60,7 +60,7 @@ def test_create_account_success(mock_send_email, mock_get_current_user, mock_con
 
 
 # Test for missing required fields
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 @patch('app.auth.decorators.get_current_user')
 def test_create_account_missing_required_fields(mock_get_current_user, mock_conn, client):
     # Mock the get_current_user function to return a valid admin user
@@ -85,7 +85,7 @@ def test_create_account_missing_required_fields(mock_get_current_user, mock_conn
     assert result['message'] == "Missing required field: username"
 
 
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 @patch('app.auth.decorators.get_current_user')
 def test_create_account_non_admin(mock_get_current_user, mock_conn, client):
     # Mock the get_current_user function to return a non-admin user
@@ -115,7 +115,7 @@ def test_create_account_non_admin(mock_get_current_user, mock_conn, client):
 
 
 
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 @patch('app.auth.decorators.get_current_user')
 def test_create_account_unauthenticated(mock_get_current_user, mock_conn, client):
     # Mock the get_current_user function to return None (unauthenticated user)
@@ -143,7 +143,7 @@ def test_create_account_unauthenticated(mock_get_current_user, mock_conn, client
 
 
 # Test for invalid phone format
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 @patch('app.auth.decorators.get_current_user')
 def test_create_account_invalid_phone(mock_get_current_user,mock_conn, client):
 
@@ -167,9 +167,9 @@ def test_create_account_invalid_phone(mock_get_current_user,mock_conn, client):
 
 
 # Test for username already exists (DB error)
-@patch('app.account.routes.conn')  # Mock database connection
+@patch('app.routes.account.routes.conn')  # Mock database connection
 @patch('app.auth.decorators.get_current_user')  # Mock authentication
-@patch('app.mail.mail.send_email')  # Mock email sending
+@patch('app.routes.mail.mail.send_email')  # Mock email sending
 def test_create_account_username_exists(mock_send_email, mock_get_current_user, mock_conn, client):
     """Test that attempting to register with an existing username returns 409 Conflict."""
 
@@ -205,7 +205,7 @@ def test_create_account_username_exists(mock_send_email, mock_get_current_user, 
 
 
 # Test for phone number already exists (DB error)
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 @patch('app.auth.decorators.get_current_user')
 def test_create_account_phone_exists(mock_get_current_user, mock_conn, client):
     # Step 1: Mock cursor behavior to simulate a UniqueViolation error for phone number
@@ -243,9 +243,9 @@ def test_create_account_phone_exists(mock_get_current_user, mock_conn, client):
 
 
 # Test for optional fields being passed
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 @patch('app.auth.decorators.get_current_user')
-@patch('app.account.routes.send_email')  # Mock email sending
+@patch('app.routes.account.routes.send_email')  # Mock email sending
 def test_create_account_with_optional_fields(mock_send_email, mock_get_current_user, mock_conn, client):
     # Step 1: Mock cursor behavior to simulate successful account creation
     mock_cursor = MagicMock()
@@ -284,9 +284,9 @@ def test_create_account_with_optional_fields(mock_send_email, mock_get_current_u
 
 
 
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 @patch('app.auth.decorators.get_current_user')
-@patch('app.account.routes.send_email')  # Mock email sending
+@patch('app.routes.account.routes.send_email')  # Mock email sending
 def test_create_account_duplicate_email(mock_send_email, mock_get_current_user, mock_conn, client):
     mock_get_current_user.return_value = {
         "account_id": "123e4567-e89b-12d3-a456-426614174000",
@@ -319,9 +319,9 @@ def test_create_account_duplicate_email(mock_send_email, mock_get_current_user, 
     assert result['message'] == "Email already exists."
 
 
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 @patch('app.auth.decorators.get_current_user')
-@patch('app.account.routes.send_email')
+@patch('app.routes.account.routes.send_email')
 def test_create_account_email_failure(mock_send_email, mock_get_current_user, mock_conn, client):
     # Mock the get_current_user function to return a valid admin user
     mock_get_current_user.return_value = {
@@ -359,9 +359,9 @@ def test_create_account_email_failure(mock_send_email, mock_get_current_user, mo
 
 
 # Test for handling unexpected errors
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 @patch('app.auth.decorators.get_current_user')
-@patch('app.account.routes.send_email')
+@patch('app.routes.account.routes.send_email')
 def test_create_account_unexpected_error(mock_send_email, mock_get_current_user, mock_conn, client):
     # Mock cursor behavior to raise an unexpected exception
     mock_cursor = MagicMock()
@@ -389,9 +389,9 @@ def test_create_account_unexpected_error(mock_send_email, mock_get_current_user,
 
 
 
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 @patch('app.auth.decorators.get_current_user')
-@patch('app.account.routes.send_email')
+@patch('app.routes.account.routes.send_email')
 def test_create_account_duplicate_verification_token(mock_send_email, mock_get_current_user, mock_conn, client):
     # Mock the get_current_user function to return a valid admin user
     mock_get_current_user.return_value = {
@@ -426,9 +426,9 @@ def test_create_account_duplicate_verification_token(mock_send_email, mock_get_c
     result = json.loads(response.data)
     assert "An unexpected error occurred" in result['error']
 
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 @patch('app.auth.decorators.get_current_user')
-@patch('app.account.routes.send_email')
+@patch('app.routes.account.routes.send_email')
 def test_create_account_foreign_key_violation(mock_send_email, mock_get_current_user, mock_conn, client):
     # Mock the get_current_user function to return a valid admin user
     mock_get_current_user.return_value = {
@@ -463,9 +463,9 @@ def test_create_account_foreign_key_violation(mock_send_email, mock_get_current_
 
 
 
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 @patch('app.auth.decorators.get_current_user')
-@patch('app.account.routes.send_email')
+@patch('app.routes.account.routes.send_email')
 def test_create_account_invalid_email(mock_send_email, mock_get_current_user, mock_conn, client):
     # Mock the get_current_user function to return a valid admin user
     mock_get_current_user.return_value = {

@@ -1,7 +1,7 @@
 
 from typing import Union, Optional, Tuple
 
-from app.reports_summary.validators import validate_account
+from app.routes.reports_summary.validators import validate_account
 from app.main import global_conn as conn
 from app.config import logger
 

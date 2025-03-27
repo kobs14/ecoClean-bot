@@ -26,7 +26,7 @@ def client(app):
 ################################
 
 # Test 1: Update account success
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 @patch('app.auth.decorators.get_current_user')
 def test_update_account_success(mock_get_current_user, mock_conn, client):
     mock_cursor = MagicMock()
@@ -80,7 +80,7 @@ def test_update_account_no_fields(mock_get_current_user, client):
     assert result['message'] == "No valid fields to update"
 
 # Test 4: Account not found
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 @patch('app.auth.decorators.get_current_user')
 def test_update_account_not_found(mock_get_current_user, mock_conn, client):
     mock_cursor = MagicMock()
@@ -101,7 +101,7 @@ def test_update_account_not_found(mock_get_current_user, mock_conn, client):
     assert result['message'] == "Account not found"
 
 # Test 5: Unique violation on username
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 @patch('app.auth.decorators.get_current_user')
 def test_update_account_username_exists(mock_get_current_user, mock_conn, client):
     mock_cursor = MagicMock()
@@ -122,7 +122,7 @@ def test_update_account_username_exists(mock_get_current_user, mock_conn, client
     assert result['message'] == "Username already exists."
 
 # Test 6: Unique violation on phone number
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 @patch('app.auth.decorators.get_current_user')
 def test_update_account_phone_exists(mock_get_current_user, mock_conn, client):
     mock_cursor = MagicMock()
@@ -143,7 +143,7 @@ def test_update_account_phone_exists(mock_get_current_user, mock_conn, client):
     assert result['message'] == "Phone number already exists."
 
 # Test 7: Unexpected error during update
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 @patch('app.auth.decorators.get_current_user')
 def test_update_account_unexpected_error(mock_get_current_user, mock_conn, client):
     mock_cursor = MagicMock()

@@ -40,7 +40,7 @@ VALID_DISABLED_ACCOUNT = {
 }
 
 # Test 1: Successfully fetch active accounts
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 def test_get_accounts_by_status_active_success(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -55,7 +55,7 @@ def test_get_accounts_by_status_active_success(mock_conn, client):
     assert result[0]['account_username'] == 'active_user'
 
 # Test 2: Successfully fetch disabled accounts
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 def test_get_accounts_by_status_disabled_success(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -78,7 +78,7 @@ def test_get_accounts_by_status_invalid_status(client):
     assert result['message'] == "Invalid status. Allowed values are 'active' or 'disabled'."
 
 # Test 4: No accounts found for the given status
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 def test_get_accounts_by_status_no_accounts_found(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -91,7 +91,7 @@ def test_get_accounts_by_status_no_accounts_found(mock_conn, client):
     assert result['message'] == "No accounts found."
 
 # Test 5: Unexpected error during fetching
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 def test_get_accounts_by_status_unexpected_error(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor

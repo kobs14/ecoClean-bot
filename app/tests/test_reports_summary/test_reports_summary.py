@@ -20,7 +20,7 @@ def client(app):
 
 
 # Test successful report generation
-@patch('app.reports_summary.routes.conn')
+@patch('app.routes.reports_summary.routes.conn')
 def test_get_summary_report_success(mock_conn, client):
     # Mock cursor and query results
     mock_cursor = MagicMock()
@@ -96,7 +96,7 @@ def test_get_summary_report_invalid_group_by(client):
 
 
 # Test database error handling
-@patch('app.reports_summary.routes.conn')
+@patch('app.routes.reports_summary.routes.conn')
 def test_get_summary_report_database_error(mock_conn, client):
     # Mock database error
     mock_cursor = MagicMock()
@@ -110,7 +110,7 @@ def test_get_summary_report_database_error(mock_conn, client):
 
 
 # Test different group_by values
-@patch('app.reports_summary.routes.conn')
+@patch('app.routes.reports_summary.routes.conn')
 def test_get_summary_report_group_by_options(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -131,7 +131,7 @@ def test_get_summary_report_group_by_options(mock_conn, client):
 ###
 
 # Test successful performance report retrieval
-@patch('app.reports_summary.routes.get_employee_performance_data')
+@patch('app.routes.reports_summary.routes.get_employee_performance_data')
 def test_get_employee_performance_success(mock_get_data, client):
     # Mock performance data
     mock_data = {
@@ -164,7 +164,7 @@ def test_get_employee_performance_success(mock_get_data, client):
 
 
 # Test without employee_id (should return all employees)
-@patch('app.reports_summary.routes.get_employee_performance_data')
+@patch('app.routes.reports_summary.routes.get_employee_performance_data')
 def test_get_employee_performance_no_employee_id(mock_get_data, client):
     mock_data = [
         {'employee_id': '12345', 'total_jobs': 15},
@@ -196,7 +196,7 @@ def test_get_employee_performance_missing_params(client):
 
 
 # Test validation error handling
-@patch('app.reports_summary.routes.get_employee_performance_data')
+@patch('app.routes.reports_summary.routes.get_employee_performance_data')
 def test_get_employee_performance_validation_error(mock_get_data, client):
     # Mock validation error
     mock_get_data.side_effect = ValueError("Invalid date format")
@@ -209,7 +209,7 @@ def test_get_employee_performance_validation_error(mock_get_data, client):
 
 
 # Test server error handling
-@patch('app.reports_summary.routes.get_employee_performance_data')
+@patch('app.routes.reports_summary.routes.get_employee_performance_data')
 def test_get_employee_performance_server_error(mock_get_data, client):
     # Mock server error
     mock_get_data.side_effect = Exception("Database connection error")
@@ -222,7 +222,7 @@ def test_get_employee_performance_server_error(mock_get_data, client):
 
 
 # Test with invalid employee_id format
-@patch('app.reports_summary.routes.get_employee_performance_data')
+@patch('app.routes.reports_summary.routes.get_employee_performance_data')
 def test_get_employee_performance_invalid_employee_id(mock_get_data, client):
     mock_get_data.side_effect = ValueError("Invalid employee ID format")
 
@@ -234,7 +234,7 @@ def test_get_employee_performance_invalid_employee_id(mock_get_data, client):
 
 
 # Test date range validation
-@patch('app.reports_summary.routes.get_employee_performance_data')
+@patch('app.routes.reports_summary.routes.get_employee_performance_data')
 def test_get_employee_performance_invalid_date_range(mock_get_data, client):
     mock_get_data.side_effect = ValueError("End date must be after start date")
 
@@ -249,7 +249,7 @@ def test_get_employee_performance_invalid_date_range(mock_get_data, client):
 
 
 # Test successful retrieval of top clients
-@patch('app.reports_summary.routes.conn')
+@patch('app.routes.reports_summary.routes.conn')
 def test_get_top_clients_success(mock_conn, client):
     # Mock cursor and query results
     mock_cursor = MagicMock()
@@ -295,7 +295,7 @@ def test_get_top_clients_success(mock_conn, client):
 
 
 # Test with custom limit
-@patch('app.reports_summary.routes.conn')
+@patch('app.routes.reports_summary.routes.conn')
 def test_get_top_clients_custom_limit(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -348,7 +348,7 @@ def test_get_top_clients_invalid_date_format(client):
 
 
 # Test database error handling
-@patch('app.reports_summary.routes.conn')
+@patch('app.routes.reports_summary.routes.conn')
 def test_get_top_clients_database_error(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -362,7 +362,7 @@ def test_get_top_clients_database_error(mock_conn, client):
 
 
 # Test empty results
-@patch('app.reports_summary.routes.conn')
+@patch('app.routes.reports_summary.routes.conn')
 def test_get_top_clients_empty_results(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -376,7 +376,7 @@ def test_get_top_clients_empty_results(mock_conn, client):
 
 
 # Test result ordering
-@patch('app.reports_summary.routes.conn')
+@patch('app.routes.reports_summary.routes.conn')
 def test_get_top_clients_ordering(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -400,7 +400,7 @@ def test_get_top_clients_ordering(mock_conn, client):
 ###
 
 # Test successful retrieval of revenue by payment method
-@patch('app.reports_summary.routes.conn')
+@patch('app.routes.reports_summary.routes.conn')
 def test_get_revenue_by_payment_method_success(mock_conn, client):
     # Mock cursor and query results
     mock_cursor = MagicMock()
@@ -479,7 +479,7 @@ def test_get_revenue_by_payment_method_invalid_date_format(client):
 
 
 # Test database error handling
-@patch('app.reports_summary.routes.conn')
+@patch('app.routes.reports_summary.routes.conn')
 def test_get_revenue_by_payment_method_database_error(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -493,7 +493,7 @@ def test_get_revenue_by_payment_method_database_error(mock_conn, client):
 
 
 # Test empty results
-@patch('app.reports_summary.routes.conn')
+@patch('app.routes.reports_summary.routes.conn')
 def test_get_revenue_by_payment_method_empty_results(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -507,7 +507,7 @@ def test_get_revenue_by_payment_method_empty_results(mock_conn, client):
 
 
 # Test result totals calculation
-@patch('app.reports_summary.routes.conn')
+@patch('app.routes.reports_summary.routes.conn')
 def test_get_revenue_by_payment_method_totals(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -532,7 +532,7 @@ def test_get_revenue_by_payment_method_totals(mock_conn, client):
 
 
 # Test zero revenue cases
-@patch('app.reports_summary.routes.conn')
+@patch('app.routes.reports_summary.routes.conn')
 def test_get_revenue_by_payment_method_zero_revenue(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -554,7 +554,7 @@ def test_get_revenue_by_payment_method_zero_revenue(mock_conn, client):
 ###
 
 # Test basic report with default parameters
-@patch('app.reports_summary.routes.conn')
+@patch('app.routes.reports_summary.routes.conn')
 def test_get_custom_report_defaults(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -586,7 +586,7 @@ def test_get_custom_report_defaults(mock_conn, client):
 
 
 # Test with all parameters specified
-@patch('app.reports_summary.routes.conn')
+@patch('app.routes.reports_summary.routes.conn')
 def test_get_custom_report_all_params(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -621,7 +621,7 @@ def test_get_custom_report_all_params(mock_conn, client):
 
 
 # Test different group by options
-@patch('app.reports_summary.routes.conn')
+@patch('app.routes.reports_summary.routes.conn')
 def test_get_custom_report_group_by_options(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -639,7 +639,7 @@ def test_get_custom_report_group_by_options(mock_conn, client):
 
 
 # Test different limit values
-@patch('app.reports_summary.routes.conn')
+@patch('app.routes.reports_summary.routes.conn')
 def test_get_custom_report_limit_values(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -657,7 +657,7 @@ def test_get_custom_report_limit_values(mock_conn, client):
 
 
 # Test date range filters
-@patch('app.reports_summary.routes.conn')
+@patch('app.routes.reports_summary.routes.conn')
 def test_get_custom_report_date_filters(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -679,7 +679,7 @@ def test_get_custom_report_date_filters(mock_conn, client):
 
 
 # Test payment method filter
-@patch('app.reports_summary.routes.conn')
+@patch('app.routes.reports_summary.routes.conn')
 def test_get_custom_report_payment_method_filter(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -700,7 +700,7 @@ def test_get_custom_report_payment_method_filter(mock_conn, client):
 
 
 # Test job status filter
-@patch('app.reports_summary.routes.conn')
+@patch('app.routes.reports_summary.routes.conn')
 def test_get_custom_report_job_status_filter(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -721,7 +721,7 @@ def test_get_custom_report_job_status_filter(mock_conn, client):
 
 
 # Test database error handling
-@patch('app.reports_summary.routes.conn')
+@patch('app.routes.reports_summary.routes.conn')
 def test_get_custom_report_database_error(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -735,7 +735,7 @@ def test_get_custom_report_database_error(mock_conn, client):
 
 
 # Test revenue calculations
-@patch('app.reports_summary.routes.conn')
+@patch('app.routes.reports_summary.routes.conn')
 def test_get_custom_report_revenue_calculations(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor

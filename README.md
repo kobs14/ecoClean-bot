@@ -95,18 +95,20 @@ EcoClean Bot is designed to help small businesses manage their workforce efficie
 
 ```bash
 ecoclean-bot/
-├── app/                  # Flask application code
-│   ├── __init__.py       # Application initialization
-│   ├── routes/           # API routes
-│   ├── models/           # Database models
-│   ├── services/         # Business logic and services
-│   └── utils/            # Utility functions
+├── app/                  # Flask application code (Backend)
+│   ├── auth              # Authentication
+│   ├── routes            # API routes
+│   ├── storage           # Database models
+│   ├── tests             # Test suite
+│   ├── config.py
+│   ├── main.py
+│   └── requirements.txt
 ├── initdb/               # Database initialization scripts
-├── tests/                # Test suite
+├── bot                   # Bot Server
 ├── docker-compose.yml    # Docker Compose configuration
 ├── Dockerfile            # Dockerfile for the Flask app
-├── requirements.txt      # Python dependencies
-└── README.md             # Project documentation (you are here!)
+├── docs
+└── README.md             # Project documentation (you are here!)         # Project documentation (you are here!)
 ```
 
 ## 🚨 Troubleshooting

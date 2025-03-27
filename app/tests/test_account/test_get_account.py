@@ -20,7 +20,7 @@ def client(app):
 
 
 
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 def test_get_account_success(mock_conn, client):
     # Mock the database cursor and its return values
     mock_cursor = MagicMock()
@@ -58,7 +58,7 @@ def test_get_account_success(mock_conn, client):
     assert "telegram" in result
 
 
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 def test_get_account_invalid_uuid(mock_conn, client):
     response = client.get('/account/invalid-uuid')
 
@@ -67,7 +67,7 @@ def test_get_account_invalid_uuid(mock_conn, client):
     assert result['message'] == "Invalid account ID format"
 
 
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 def test_get_account_not_found(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
@@ -80,7 +80,7 @@ def test_get_account_not_found(mock_conn, client):
     assert result['message'] == "Account not found"
 
 
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 def test_get_account_unexpected_error(mock_conn, client):
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cursor

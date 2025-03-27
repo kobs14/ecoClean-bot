@@ -25,7 +25,7 @@ def client(app):
 ##################################
 # update_status endpoint Testing'
 # Test 1: Successful status update to 'active'
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 @patch('app.auth.decorators.get_current_user')
 def test_update_account_status_active_success(mock_get_current_user, mock_conn, client):
     mock_cursor = MagicMock()
@@ -47,7 +47,7 @@ def test_update_account_status_active_success(mock_get_current_user, mock_conn, 
     assert result['message'] == "Account status updated to active successfully"
 
 # Test 2: Successful status update to 'disabled'
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 @patch('app.auth.decorators.get_current_user')
 def test_update_account_status_disabled_success(mock_get_current_user, mock_conn, client):
     mock_cursor = MagicMock()
@@ -84,7 +84,7 @@ def test_update_account_status_invalid_status(mock_get_current_user, client):
     assert result['message'] == "Invalid status. Allowed values are 'active' or 'disabled'."
 
 # Test 4: Account not found
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 @patch('app.auth.decorators.get_current_user')
 def test_update_account_status_account_not_found(mock_get_current_user, mock_conn, client):
     mock_cursor = MagicMock()
@@ -105,7 +105,7 @@ def test_update_account_status_account_not_found(mock_get_current_user, mock_con
     assert result['message'] == "Account not found"
 
 # Test 5: Unexpected error during status update
-@patch('app.account.routes.conn')
+@patch('app.routes.account.routes.conn')
 @patch('app.auth.decorators.get_current_user')
 def test_update_account_status_unexpected_error(mock_get_current_user, mock_conn, client):
     mock_cursor = MagicMock()
