@@ -1,8 +1,8 @@
-Flask~=2.2.3
+Flask>=3.0.0
 psycopg2-binary
 python-dotenv
 requests
-Werkzeug~=2.2.2
+Werkzeug>=3.0.6
 pytest
 pytest-flask
 bcrypt
