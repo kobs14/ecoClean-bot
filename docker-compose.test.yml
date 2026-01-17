@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  api:
+    environment:
+      - ENVIRONMENT=testing
+      - LOG_LEVEL=CRITICAL  # Only show critical logs during tests
+
+  test:
+    environment:
+      - ENVIRONMENT=testing
+      - LOG_LEVEL=INFO
+
+

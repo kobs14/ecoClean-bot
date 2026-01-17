@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  api:
+    restart: unless-stopped
+    volumes:
+      - "api-logs:/app/logs"
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  bot:
+    restart: unless-stopped
+    volumes:
+      - "bot-logs:/bot/logs"
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+
+volumes:
+  api-logs:
+  bot-logs:

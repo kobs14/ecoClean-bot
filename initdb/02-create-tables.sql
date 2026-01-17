@@ -40,6 +40,7 @@ BEGIN
     );
   END IF;
 
+
   IF NOT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'telegram') THEN
     CREATE TABLE telegram (
         telegram_id                         UUID DEFAULT gen_random_uuid() PRIMARY KEY,
