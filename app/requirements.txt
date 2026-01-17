@@ -1,11 +1,11 @@
-Flask~=2.2.3
+Flask>=3.0.0
 psycopg2-binary
 python-dotenv
-requests
-Werkzeug~=2.2.2
+requests>=2.32.4
+Werkzeug>=3.0.6
 pytest
 pytest-flask
 bcrypt
 email_validator
-boto3
+boto3>=1.35.0
 openpyxl
